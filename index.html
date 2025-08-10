@@ -1,205 +1,183 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TCP/IP</title>
-  <style>
-    :root{
-      --transition: 700ms;
-      --overlay: rgba(0,0,0,.60);
-      --text: #f7f7f7;
-      --accent: #e5e5e5;
-      --maxw: 1200px;
-    }
-
-    html,body{ height:100%; }
-    body{
-      margin:0; background:#0a0a0a; color:var(--text);
-      font-family: system-ui,-apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      display:grid; grid-template-rows:auto 1fr auto; min-height:100vh;
-    }
-
-    header, footer{
-      padding: clamp(10px, 2vw, 20px) clamp(14px, 3vw, 32px);
-      letter-spacing:.03em;
-    }
-    header h1{ margin:0; font-weight:700; font-size:clamp(18px, 2.3vw, 28px); }
-    footer{ font-size:clamp(12px, 1.8vw, 14px); color:var(--accent); text-align:center; }
-
-    /* 3D stage needs perspective for iOS/Safari */
-    .stage{ position:relative; display:grid; place-items:center; overflow:hidden; perspective: 1200px; -webkit-perspective:1200px; }
-
-    /* Inner wrapper rotates; faces are children */
-    .card{ position:relative; width:100%; max-width:var(--maxw); aspect-ratio: 16/9; cursor:pointer; outline:0; }
-    .inner{ position:relative; width:100%; height:calc(100svh - 120px); transform-style:preserve-3d; -webkit-transform-style:preserve-3d; transition: transform var(--transition) ease; border-radius:16px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,.45); will-change:transform; }
-    .inner.flipped{ transform: rotateY(180deg); -webkit-transform: rotateY(180deg); }
-
-    .face{ position:absolute; inset:0; display:grid; place-items:center; backface-visibility:hidden; -webkit-backface-visibility:hidden; background-position:center; background-size:cover; background-repeat:no-repeat; transform: translateZ(0); }
-
-    /* FRONT */
-    .front img{ width:100%; height:100%; object-fit:cover; display:block; }
-
-    /* BACK */
-    .back{ transform: rotateY(180deg); -webkit-transform: rotateY(180deg); }
-    /* Removed global overlay to avoid stacking issues on some Safari builds */
-
-    .poem-wrap{ position:relative; z-index:2; max-width:min(90ch, 92%); margin-inline:auto; line-height:1.6; font-size:clamp(16px, 2.2vw, 20px); padding:clamp(16px, 3.4vw, 32px); background: rgba(0,0,0,.62); border-radius:14px; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
-    .poem-wrap p{ margin:.65em 0; text-shadow:0 1px 2px rgba(0,0,0,.6); }
-    .poem-wrap em{ font-style:italic; opacity:.95; }
-
-    .hint{ position:absolute; bottom:10px; right:14px; font-size:12px; color:#eee; opacity:.85; background:rgba(0,0,0,.35); padding:6px 10px; border-radius:999px; }
-
-    /* Reduced Motion fallback: fade between faces */
-    @media (prefers-reduced-motion: reduce){
-      .inner{ transition: none; }
-      .front, .back{ transition: opacity 220ms linear; }
-      .inner:not(.flipped) .back{ opacity:0; }
-      .inner.flipped .front{ opacity:0; }
-      .back{ transform:none; }
-    }
-      .front, .back{ transition: opacity 200ms linear; }
-      .front{ opacity:1; }
-      .inner.flipped .front{ opacity:0; }
-      .back{ opacity:0; transform:none; }
-      .inner.flipped .back{ opacity:1; }
-    }
-      /* Explicit visibility/opacity fallback to ensure text shows even if 3D paint order fails */
-    .back{ opacity:0; visibility:hidden; }
-    .inner.flipped .back{ opacity:1; visibility:visible; }
-    .inner.flipped .front{ opacity:0; }
-
-  </style>
-  <script>
-    // Feature detect 3D transforms; if not supported, use a fade fallback.
-    (function(){
-      const el = document.createElement('p');
-      let has3D = false;
-      const props = ['transform','webkitTransform','msTransform','MozTransform'];
-      document.body?.appendChild?.(el);
-      props.forEach(p=>{ if(el.style[p] !== undefined){ el.style[p] = 'translateZ(1px)'; } });
-      has3D = !!(el.style.transform || el.style.webkitTransform || el.style.msTransform || el.style.MozTransform);
-      el.remove();
-      if(!has3D){ document.documentElement.classList.add('no-3d'); }
-    })();
-  </script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>TCP/IP Poema Flip Card</title>
+	<style>
+		:root {
+			--transition: 0.7s;
+			--maxw: 600px;
+			--radius: 18px;
+			--shadow: 0 8px 32px rgba(0,0,0,0.35);
+			--header-height: 64px;
+			--footer-height: 48px;
+		}
+		body {
+			margin: 0;
+			min-height: 100vh;
+			background: #111;
+			color: #f7f7f7;
+			font-family: system-ui, sans-serif;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: flex-start;
+		header {
+			width: 100%;
+			text-align: center;
+			padding: 1.2em 0 0.5em 0;
+			font-size: 2rem;
+			font-weight: 700;
+			letter-spacing: .04em;
+			background: none;
+			color: #f7f7f7;
+			flex-shrink: 0;
+		}
+		footer {
+			width: 100%;
+			text-align: center;
+			padding: 1em 0 1.2em 0;
+			font-size: 1rem;
+			color: #ccc;
+			letter-spacing: .03em;
+			background: none;
+			flex-shrink: 0;
+		}
+		}
+		.card-container {
+			perspective: 1200px;
+			width: 100vw;
+			max-width: var(--maxw);
+			aspect-ratio: 16/9;
+			margin: 0 auto;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex: 1 0 auto;
+		}
+		.card {
+			position: relative;
+			width: 100%;
+			height: 100%;
+			border-radius: var(--radius);
+			box-shadow: var(--shadow);
+			transform-style: preserve-3d;
+			transition: transform var(--transition) cubic-bezier(.4,1.6,.4,1);
+			cursor: pointer;
+			outline: none;
+		}
+		.card.flipped {
+			transform: rotateY(180deg);
+		}
+		.card-face {
+			position: absolute;
+			width: 100%;
+			height: 100%;
+			backface-visibility: hidden;
+			border-radius: var(--radius);
+			overflow: hidden;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: #222;
+		}
+		.card-face.front {
+			background: #222;
+		}
+		.card-face.front img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			display: block;
+			border-radius: var(--radius);
+		}
+		.card-face.back {
+			transform: rotateY(180deg);
+			background: #222;
+			padding: 2vw 4vw;
+			box-sizing: border-box;
+			overflow-y: auto;
+			display: flex;
+			align-items: flex-start;
+		}
+		.poem {
+				font-size: 1.25rem;
+			}
+		.poem p:first-child {
+			margin-top: 0;
+		}
+		.poem p {
+			font-size: inherit;
+			margin-top: 0;
+			margin-bottom: 1em;
+		}
+		@media (max-width: 700px) {
+			.card-container {
+				max-width: 98vw;
+			}
+			.card-face.back {
+				padding: 3vw 2vw;
+			}
+		}
+		@media (max-width: 500px) {
+			.card-container {
+				aspect-ratio: 1/1;
+			}
+			.poem {
+				font-size: 1.5rem;
+			}
+		}
+	</style>
 </head>
 <body>
-  <header>
-    <h1>TCP/IP</h1>
-  </header>
+	<header>TCP/IP</header>
+	<div class="card-container">
+		<div class="card" id="flipCard" tabindex="0" aria-label="Flip card">
+			<div class="card-face front">
+				<img src="grabado.png" alt="Imagen grabado" />
+			</div>
+			<div class="card-face back">
+				<div class="poem">
+					<p>Bajo el sol que se quiebra en charcos,<br>
+					brincan —sin romper el hilo del aire—,<br>
+					como si cada paso fuera un <em>Zwischen</em> heideggeriano,<br>
+					un umbral suspendido entre la <em>Erde</em> y el <em>Geviert</em>,<br>
+					entre el polvo y la eternidad.</p>
 
-  <main class="stage">
-    <!-- Replace IMG_URL with your image path -->
-    <div class="card" role="region" aria-label="Imagen con poema con volteo 3D">
-      <div id="inner" class="inner" role="button" aria-pressed="false" aria-label="Abrir y cerrar el poema" tabindex="0">
-        <div class="face front" id="front">
-          <img id="frontImg" alt="Imagen" src="image.jpg" />
-          <div class="hint">Toca o presiona Enter</div>
-        </div>
-        <section class="face back" id="back">
-          <article class="poem-wrap" aria-live="polite">
-            <p>Bajo el sol que se quiebra en charcos,<br>
-            brincan —sin romper el hilo del aire—,<br>
-            como si cada paso fuera un <em>Zwischen</em> heideggeriano,<br>
-            un umbral suspendido entre la <em>Erde</em> y el <em>Geviert</em>,<br>
-            entre el polvo y la eternidad.</p>
+					<p>En sus alas negras, <em>comme un costume taillé par l’idée même du mouvement</em>,<br>
+					se pliega la gracia de un pensamiento deleuziano,<br>
+					que no avanza en línea recta sino que salta, se curva, se repliega,<br>
+					rizoma sobre el asfalto caliente.</p>
 
-            <p>En sus alas negras, <em>comme un costume taillé par l’idée même du mouvement</em>,<br>
-            se pliega la gracia de un pensamiento deleuziano,<br>
-            que no avanza en línea recta sino que salta, se curva, se repliega,<br>
-            rizoma sobre el asfalto caliente.</p>
+					<p><em>Once upon a noon so dreary</em>, sus sombras se alargan como versos de Poe,<br>
+					góticos y pulidos, posando en silencio sobre el pavimento<br>
+					antes del próximo impulso.</p>
 
-            <p><em>Once upon a noon so dreary</em>, sus sombras se alargan como versos de Poe,<br>
-            góticos y pulidos, posando en silencio sobre el pavimento<br>
-            antes del próximo impulso.</p>
+					<p>Y, sin embargo, su andar es oración:<br>
+					cada salto es un <em>ora pro nobis</em>, cada pausa, un <em>examen particulare</em>,<br>
+					y en la vibración de su plumaje, la teología secreta de un manto mariano,<br>
+					teñido en la tinta de la noche.</p>
 
-            <p>Y, sin embargo, su andar es oración:<br>
-            cada salto es un <em>ora pro nobis</em>, cada pausa, un <em>examen particulare</em>,<br>
-            y en la vibración de su plumaje, la teología secreta de un manto mariano,<br>
-            teñido en la tinta de la noche.</p>
-
-            <p>Así —entre lo leve y lo eterno— trazan un rosario de movimientos,<br>
-            donde cada cuenta es un relámpago que une lo visible
-            con la callada geometría del cielo.</p>
-          </article>
-        </section>
-      </div>
-    </div>
-  </main>
-
-  <footer>Hélio Automatikos 2025</footer>
-
-  <script>
-    (function(){
-      const IMG_URL = 'grabado.png'; // <-- reemplaza con tu ruta (p.ej., 'images/grabado.png')
-      const inner = document.getElementById('inner');
-      const front = document.getElementById('front');
-      const back  = document.getElementById('back');
-      const img   = document.getElementById('frontImg');
-
-      function applyBackground(url){
-        front.style.backgroundImage = `url('${url}')`;
-        back.style.backgroundImage  = `url('${url}')`;
-        img.src = url;
-      }
-      applyBackground(IMG_URL);
-
-      function toggle(){
-        const f = inner.classList.toggle('flipped');
-        inner.setAttribute('aria-pressed', f ? 'true' : 'false');
-      }
-
-      inner.addEventListener('click', toggle);
-      inner.addEventListener('keydown', (e)=>{
-        if(e.key==='Enter' || e.key===' '){ e.preventDefault(); toggle(); }
-      });
-
-      // Ensure height fits viewport including mobile UI chrome changes
-      function resize(){
-        const h = window.visualViewport?.height || window.innerHeight;
-        inner.style.height = Math.min(h - 120, h - 80) + 'px';
-      }
-      window.addEventListener('resize', resize, {passive:true});
-      resize();
-    })();
-  </script>
-  <script>
-    // JS rewritten: avoids pseudo-element overlay and forces z-index ordering
-    (function(){
-      const IMG_URL = 'grabado.png'; // <-- cambia por tu ruta real
-      const inner = document.getElementById('inner');
-      const front = document.getElementById('front');
-      const back  = document.getElementById('back');
-      const img   = document.getElementById('frontImg');
-
-      function applyBackground(url){
-        front.style.backgroundImage = `url('${url}')`;
-        back.style.backgroundImage  = `url('${url}')`;
-        img.src = url;
-      }
-      applyBackground(IMG_URL);
-
-      function toggle(){
-        const flipped = inner.classList.toggle('flipped');
-        inner.setAttribute('aria-pressed', flipped ? 'true' : 'false');
-        // Ensure correct stacking order
-        front.style.zIndex = flipped ? 1 : 2;
-        back.style.zIndex  = flipped ? 3 : 1;
-      }
-
-      inner.addEventListener('click', toggle);
-      inner.addEventListener('keydown', (e)=>{
-        if(e.key==='Enter' || e.key===' '){ e.preventDefault(); toggle(); }
-      });
-
-      function resize(){
-        const h = window.visualViewport?.height || window.innerHeight;
-        inner.style.height = Math.min(h - 120, h - 80) + 'px';
-      }
-      window.addEventListener('resize', resize, {passive:true});
-      resize();
-    })();
-  </script>
+					<p>Así —entre lo leve y lo eterno— trazan un rosario de movimientos,<br>
+					donde cada cuenta es un relámpago que une lo visible
+					con la callada geometría del cielo.</p>
+				</div>
+			</div>
+		</div>
+	</div>
+	<footer>Hélio Automatikos 2025</footer>
+	<script>
+		const card = document.getElementById('flipCard');
+		card.addEventListener('click', () => {
+			card.classList.toggle('flipped');
+		});
+		card.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				card.classList.toggle('flipped');
+			}
+		});
+	</script>
 </body>
 </html>
