@@ -7,13 +7,12 @@
   <style>
     :root{
       --transition: 700ms;
-      --overlay: rgba(0,0,0,.55);
-      --text: #f5f5f5;
+      --overlay: rgba(0,0,0,.60);
+      --text: #f7f7f7;
       --accent: #e5e5e5;
-      --maxw: 1100px;
+      --maxw: 1200px;
     }
 
-    /* Layout */
     html,body{ height:100%; }
     body{
       margin:0; background:#0a0a0a; color:var(--text);
@@ -28,62 +27,38 @@
     header h1{ margin:0; font-weight:700; font-size:clamp(18px, 2.3vw, 28px); }
     footer{ font-size:clamp(12px, 1.8vw, 14px); color:var(--accent); text-align:center; }
 
-    /* Flip card stage */
-    .stage{ position:relative; display:grid; place-items:center; overflow:hidden; }
-    .card{
-      position:relative; width:100%; height:calc(100svh - 120px); /* header+footer room */
-      max-width:var(--maxw); aspect-ratio: 16/9; /* improves desktop feel */
-      transform-style: preserve-3d; transition: transform var(--transition) ease-in-out;
-      cursor: pointer; outline:none; border-radius: 16px; overflow:hidden; box-shadow: 0 10px 40px rgba(0,0,0,.4);
-    }
-    .card.fit-viewport{ width: min(100%, 100vw); height: min(70vh, 100svh - 120px); }
+    /* 3D stage needs perspective for iOS/Safari */
+    .stage{ position:relative; display:grid; place-items:center; overflow:hidden; perspective: 1200px; -webkit-perspective:1200px; }
 
-    .card.flipped{ transform: rotateY(180deg); }
+    /* Inner wrapper rotates; faces are children */
+    .card{ position:relative; width:100%; max-width:var(--maxw); aspect-ratio: 16/9; cursor:pointer; outline:0; }
+    .inner{ position:relative; width:100%; height:calc(100svh - 120px); transform-style:preserve-3d; -webkit-transform-style:preserve-3d; transition: transform var(--transition) ease; border-radius:16px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,.45); }
+    .inner.flipped{ transform: rotateY(180deg); }
 
-    .face{ position:absolute; inset:0; backface-visibility: hidden; display:grid; place-items:center; }
+    .face{ position:absolute; inset:0; display:grid; place-items:center; backface-visibility:hidden; -webkit-backface-visibility:hidden; background-position:center; background-size:cover; background-repeat:no-repeat; }
 
-    /* FRONT: full-bleed responsive image */
-    .front img{
-      width:100%; height:100%; object-fit:cover; display:block;
-    }
+    /* FRONT */
+    .front img{ width:100%; height:100%; object-fit:cover; display:block; }
 
-    /* BACK: poem over same image with readability overlay */
+    /* BACK */
     .back{ transform: rotateY(180deg); }
-    .back::before{
-      content:""; position:absolute; inset:0; background: var(--overlay); backdrop-filter: blur(2px);
-    }
-    .back{ color:var(--text); }
+    .back::before{ content:""; position:absolute; inset:0; background:var(--overlay); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
 
-    .poem-wrap{
-      position:relative; z-index:1; max-width: min(90ch, 92%);
-      margin-inline:auto; line-height:1.5; font-size:clamp(14px, 2vw, 18px);
-      padding: clamp(14px, 3vw, 28px);
-      border-radius: 12px;
-    }
-    .poem-wrap p{ margin:.6em 0; }
+    .poem-wrap{ position:relative; z-index:1; max-width:min(90ch, 92%); margin-inline:auto; line-height:1.6; font-size:clamp(14px, 2.2vw, 18px); padding:clamp(14px, 3vw, 28px); }
+    .poem-wrap p{ margin:.65em 0; text-shadow:0 1px 2px rgba(0,0,0,.6); }
     .poem-wrap em{ font-style:italic; opacity:.95; }
 
-    /* Accessibility & motion preferences */
+    .hint{ position:absolute; bottom:10px; right:14px; font-size:12px; color:#eee; opacity:.85; background:rgba(0,0,0,.35); padding:6px 10px; border-radius:999px; }
+
+    /* Reduced Motion fallback: fade between faces */
     @media (prefers-reduced-motion: reduce){
-      .card{ transition:none; }
-      .card.flipped{ transform:none; }
-      .back{ position:absolute; opacity:0; transition:none; }
-      .card.flipped .back{ opacity:1; }
+      .inner{ transition:none; }
+      .front, .back{ transition: opacity 200ms linear; }
       .front{ opacity:1; }
-      .card.flipped .front{ opacity:0; }
+      .inner.flipped .front{ opacity:0; }
+      .back{ opacity:0; transform:none; }
+      .inner.flipped .back{ opacity:1; }
     }
-
-    /* Make sure the background image appears also on the back */
-    .back, .front{
-      background-position:center; background-size:cover; background-repeat:no-repeat;
-    }
-
-    /* Small helper tooltip */
-    .hint{
-      position:absolute; bottom:10px; right:14px; font-size:12px; color:#ddd; opacity:.8;
-      background:rgba(0,0,0,.35); padding:6px 10px; border-radius:999px;
-    }
-
   </style>
 </head>
 <body>
@@ -92,44 +67,41 @@
   </header>
 
   <main class="stage">
-    <!--
-      Replace IMG_URL below with your exported B/N image path (e.g., images/grabado.png).
-      The same URL is used as <img> source (front) and as CSS background (front/back)
-      so both sides stay visually consistent on all devices.
-    -->
-    <div id="flipCard" class="card" role="button" aria-label="Abrir y cerrar el poema" tabindex="0">
-      <div class="face front" id="front">
-        <img id="frontImg" alt="Imagen" src="image.jpg" />
-        <div class="hint">Toca o presiona Enter</div>
+    <!-- Replace IMG_URL with your image path -->
+    <div class="card" role="region" aria-label="Imagen con poema con volteo 3D">
+      <div id="inner" class="inner" role="button" aria-pressed="false" aria-label="Abrir y cerrar el poema" tabindex="0">
+        <div class="face front" id="front">
+          <img id="frontImg" alt="Imagen" src="image.jpg" />
+          <div class="hint">Toca o presiona Enter</div>
+        </div>
+        <section class="face back" id="back">
+          <article class="poem-wrap" aria-live="polite">
+            <p>Bajo el sol que se quiebra en charcos,<br>
+            brincan —sin romper el hilo del aire—,<br>
+            como si cada paso fuera un <em>Zwischen</em> heideggeriano,<br>
+            un umbral suspendido entre la <em>Erde</em> y el <em>Geviert</em>,<br>
+            entre el polvo y la eternidad.</p>
+
+            <p>En sus alas negras, <em>comme un costume taillé par l’idée même du mouvement</em>,<br>
+            se pliega la gracia de un pensamiento deleuziano,<br>
+            que no avanza en línea recta sino que salta, se curva, se repliega,<br>
+            rizoma sobre el asfalto caliente.</p>
+
+            <p><em>Once upon a noon so dreary</em>, sus sombras se alargan como versos de Poe,<br>
+            góticos y pulidos, posando en silencio sobre el pavimento<br>
+            antes del próximo impulso.</p>
+
+            <p>Y, sin embargo, su andar es oración:<br>
+            cada salto es un <em>ora pro nobis</em>, cada pausa, un <em>examen particulare</em>,<br>
+            y en la vibración de su plumaje, la teología secreta de un manto mariano,<br>
+            teñido en la tinta de la noche.</p>
+
+            <p>Así —entre lo leve y lo eterno— trazan un rosario de movimientos,<br>
+            donde cada cuenta es un relámpago que une lo visible
+            con la callada geometría del cielo.</p>
+          </article>
+        </section>
       </div>
-
-      <section class="face back" id="back">
-        <article class="poem-wrap" aria-live="polite">
-          <p>Bajo el sol que se quiebra en charcos,<br>
-          brincan —sin romper el hilo del aire—,<br>
-          como si cada paso fuera un <em>Zwischen</em> heideggeriano,<br>
-          un umbral suspendido entre la <em>Erde</em> y el <em>Geviert</em>,<br>
-          entre el polvo y la eternidad.</p>
-
-          <p>En sus alas negras, <em>comme un costume taillé par l’idée même du mouvement</em>,<br>
-          se pliega la gracia de un pensamiento deleuziano,<br>
-          que no avanza en línea recta sino que salta, se curva, se repliega,<br>
-          rizoma sobre el asfalto caliente.</p>
-
-          <p><em>Once upon a noon so dreary</em>, sus sombras se alargan como versos de Poe,<br>
-          góticos y pulidos, posando en silencio sobre el pavimento<br>
-          antes del próximo impulso.</p>
-
-          <p>Y, sin embargo, su andar es oración:<br>
-          cada salto es un <em>ora pro nobis</em>, cada pausa, un <em>examen particulare</em>,<br>
-          y en la vibración de su plumaje, la teología secreta de un manto mariano,<br>
-          teñido en la tinta de la noche.</p>
-
-          <p>Así —entre lo leve y lo eterno— trazan un rosario de movimientos,<br>
-          donde cada cuenta es un relámpago que une lo visible<br>
-          con la callada geometría del cielo.</p>
-        </article>
-      </section>
     </div>
   </main>
 
@@ -137,32 +109,34 @@
 
   <script>
     (function(){
-      const IMG_URL = 'grabado.png'; // ⬅️ Reemplaza con tu archivo (p. ej., 'images/grabado.png')
-
-      const card = document.getElementById('flipCard');
+      const IMG_URL = 'grabado.png'; // <-- reemplaza con tu ruta (p.ej., 'images/grabado.png')
+      const inner = document.getElementById('inner');
       const front = document.getElementById('front');
-      const back = document.getElementById('back');
-      const img = document.getElementById('frontImg');
+      const back  = document.getElementById('back');
+      const img   = document.getElementById('frontImg');
 
       function applyBackground(url){
         front.style.backgroundImage = `url('${url}')`;
-        back.style.backgroundImage = `url('${url}')`;
+        back.style.backgroundImage  = `url('${url}')`;
         img.src = url;
       }
       applyBackground(IMG_URL);
 
-      function toggle(){ card.classList.toggle('flipped'); }
+      function toggle(){
+        const f = inner.classList.toggle('flipped');
+        inner.setAttribute('aria-pressed', f ? 'true' : 'false');
+      }
 
-      card.addEventListener('click', toggle);
-      card.addEventListener('keydown', (e)=>{
+      inner.addEventListener('click', toggle);
+      inner.addEventListener('keydown', (e)=>{
         if(e.key==='Enter' || e.key===' '){ e.preventDefault(); toggle(); }
       });
 
-      // Resize handling (ensures it scales nicely on phones/tablets/desktops)
-      const resize = () => {
+      // Ensure height fits viewport including mobile UI chrome changes
+      function resize(){
         const h = window.visualViewport?.height || window.innerHeight;
-        card.style.height = Math.min(h - 120, h - 80) + 'px';
-      };
+        inner.style.height = Math.min(h - 120, h - 80) + 'px';
+      }
       window.addEventListener('resize', resize, {passive:true});
       resize();
     })();
